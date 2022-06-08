@@ -27,7 +27,7 @@ def sw_h_path():
 
 @pytest.fixture
 def client():
-    file_path = SCRIPT_DIR.parent.parent / "bin" / "app.elf"
+    file_path = SCRIPT_DIR.parent.parent / "elfs" / "boilerplate_nanos.elf"
     args = ['--model', 'nanos', '--sdk', '2.1']
     with SpeculosClient(app=str(file_path), args=args) as client:
         yield client

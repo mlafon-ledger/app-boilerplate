@@ -18,34 +18,32 @@ jobs:
       matrix:
         include:
           - SDK: "$NANOS_SDK"
-            artifact: boilerplate-app-nanoS
+            name: nanos
           - SDK: "$NANOX_SDK"
-            artifact: boilerplate-app-nanoX
+            name: nanox
           - SDK: "$NANOSP_SDK"
-            artifact: boilerplate-app-nanoSP
+            name: nanosp
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
-
     steps:
       - name: Clone
         uses: actions/checkout@v2
       - name: Build
         run: |
           make BOLOS_SDK=${{ matrix.SDK }}
+          mv bin/app.elf boilerplate_${{ matrix.name }}.elf
       - name: Upload app binary
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.artifact }}
+          name: apps
           path: bin
 
   job_scan_build:
     name: Clang Static Analyzer
     runs-on: ubuntu-latest
-
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Build with Clang Static Analyzer
@@ -61,10 +59,8 @@ jobs:
   job_unit_test:
     name: Unit test
     runs-on: ubuntu-latest
-
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
-
     steps:
       - name: Clone
         uses: actions/checkout@v2
@@ -80,12 +76,10 @@ jobs:
           lcov --directory . -b "$(realpath build/)" --add-tracefile coverage.base --add-tracefile coverage.capture -o coverage.info && \
           lcov --directory . -b "$(realpath build/)" --remove coverage.info '*/unit-tests/*' -o coverage.info && \
           genhtml coverage.info -o coverage
-
       - uses: actions/upload-artifact@v2
         with:
           name: code-coverage
           path: unit-tests/coverage
-
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1
         with:
@@ -99,17 +93,13 @@ jobs:
   job_generate_doc:
     name: Generate project documentation
     runs-on: ubuntu-latest
-
     container:
       image: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
-
     steps:
       - name: Clone
         uses: actions/checkout@v2
-
       - name: HTML documentation
         run: doxygen .doxygen/Doxyfile
-
       - uses: actions/upload-artifact@v2
         with:
           name: documentation
@@ -120,7 +110,6 @@ jobs:
     needs:
       - nano_build
     runs-on: ubuntu-latest
-
     container:
       image: ghcr.io/ledgerhq/speculos:latest
       options: --entrypoint /bin/bash
@@ -128,22 +117,21 @@ jobs:
         - 9999:9999
         - 42000:42000
         - 43000:43000
-
     steps:
       - name: Clone
         uses: actions/checkout@v2
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-nanoS
-          path: bin
+          name: apps
+          path: elfs
       - name: Install dependencies
         run: |
           apt update && apt install -qy gcc netcat  # /!\ needed when installing pysha3
           pip install -r tests/ledgercomm/requirements.txt
       - name: Run test
         run: |
-          nohup bash -c "python /speculos/speculos.py bin/app.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless" > speculos.log 2<&1 &
+          nohup bash -c "python /speculos/speculos.py elfs/boilerplate_nanos.elf --apdu-port 9999 --button-port 42000 --automation-port 43000 --display headless" > speculos.log 2<&1 &
           until `nc -w5 -z -v 127.0.0.1 9999`; do sleep 1; done;
           pytest --headless tests/ledgercomm/
       - name: Upload Speculos log
@@ -158,15 +146,14 @@ jobs:
     needs:
       - nano_build
     runs-on: ubuntu-latest
-
     steps:
       - name: Clone
         uses: actions/checkout@v2
       - name: Download app binary
         uses: actions/download-artifact@v2
         with:
-          name: boilerplate-app-nanoS
-          path: bin
+          name: apps
+          path: elfs
       - name: Install tests dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y qemu-user-static
