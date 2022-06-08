@@ -32,12 +32,12 @@ jobs:
       - name: Build
         run: |
           make BOLOS_SDK=${{ matrix.SDK }}
-          mv bin/app.elf boilerplate_${{ matrix.name }}.elf
+          mv bin/app.elf bin/boilerplate_${{ matrix.name }}.elf
       - name: Upload app binary
         uses: actions/upload-artifact@v2
         with:
           name: apps
-          path: bin
+          path: bin/*.elf
 
   job_scan_build:
     name: Clang Static Analyzer
@@ -162,3 +162,25 @@ jobs:
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
         run: pytest tests/speculos/
+
+  job_functional_test_3:
+    name: Functional tests with Ragger (compatible with Speculos & physical devices)
+    needs:
+      - nano_build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v2
+      - name: Download app binary
+        uses: actions/download-artifact@v2
+        with:
+          name: apps
+          path: elfs
+      - name: Install tests dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y qemu-user-static
+          pip install --extra-index-url https://test.pypi.org/simple/ -r tests/ragger/requirements.txt
+      - name: Run test
+        env:
+          CTEST_OUTPUT_ON_FAILURE: 1
+        run: pytest tests/ragger/
