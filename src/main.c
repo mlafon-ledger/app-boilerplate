@@ -44,6 +44,8 @@ void app_main() {
     // Structured APDU command
     command_t cmd;
 
+    ux_state_t G_ux;
+
     // Reset length of APDU response
     G_output_len = 0;
     G_io_state = READY;
