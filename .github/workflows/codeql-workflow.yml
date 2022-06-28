@@ -37,8 +37,9 @@ jobs:
       with:
         languages: ${{ matrix.language }}
     
-    - run: |
-      make BOLOS_SDK=${{ matrix.SDK }} 
+    - name: Build
+      run: |
+        make BOLOS_SDK=${{ matrix.SDK }}
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
