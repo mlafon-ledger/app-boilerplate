@@ -2,17 +2,16 @@ name: "CodeQL"
 
 on:
   workflow_dispatch:
-    push:
-      branches:
-        - master
-        - develop
-        - test_codeql
-    pull_request:
-      branches:
-        - master
-        - develop
-        - test_codeql
-
+  push:
+    branches:
+      - master
+      - develop
+      - test_codeql
+  pull_request:
+    branches:
+      - master
+      - develop
+      - test_codeql
 
 jobs:
   analyse:
