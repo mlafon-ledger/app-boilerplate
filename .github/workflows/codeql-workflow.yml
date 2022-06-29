@@ -46,3 +46,7 @@ jobs:
         
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
+
+      - name: Display Sarif
+        run: |
+          cat /__w/app-boilerplate/results/cpp.sarif
