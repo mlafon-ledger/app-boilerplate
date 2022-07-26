@@ -1,7 +1,6 @@
 name: "CodeQL"
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - master
@@ -12,19 +11,15 @@ on:
       - master
       - develop
       - test_codeql
+    paths-ignore:
+      - '.github/workflows/*.yml'
 
 jobs:
   analyse:
-    name: CodeQL Analyse of boilerplate application
+    name: Analyse
     strategy: 
       matrix:
-        include:
-          - SDK: "$NANOS_SDK"
-            artifact: boilerplate-app-nanoS
-          - SDK: "$NANOX_SDK"
-            artifact: boilerplate-app-nanoX
-          - SDK: "$NANOSP_SDK"
-            artifact: boilerplate-app-nanoSP
+        sdk: [ "$NANOS_SDK", "$NANOX_SDK", "$NANOSP_SDK" ]
         language: [ 'cpp' ]
     runs-on: ubuntu-latest
     container:
@@ -42,11 +37,7 @@ jobs:
     
       - name: Build
         run: |
-          make BOLOS_SDK=${{ matrix.SDK }}
+          make BOLOS_SDK=${{ matrix.sdk }}
         
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
-
-      - name: Display Sarif
-        run: |
-          cat /__w/app-boilerplate/results/cpp.sarif
